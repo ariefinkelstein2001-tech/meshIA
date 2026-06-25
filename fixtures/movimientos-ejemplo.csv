@@ -1,0 +1,22 @@
+fecha,tipo,categoria,monto,descripcion
+2025-09-02,ingreso,ventas,180000,Venta tienda
+2025-09-05,gasto,arriendo,350000,Arriendo local
+2025-09-10,ingreso,ventas,95000,Venta online
+2025-09-15,gasto,proveedores,140000,Compra insumos
+2025-09-22,ingreso,servicios,220000,Asesoría mensual
+2025-09-28,gasto,sueldos,300000,Sueldo ayudante
+2025-10-01,ingreso,ventas,210000,Venta tienda
+2025-10-04,gasto,arriendo,350000,Arriendo local
+2025-10-09,ingreso,ventas,130000,Venta online
+2025-10-14,gasto,proveedores,160000,Compra insumos
+2025-10-19,ingreso,servicios,240000,Asesoría mensual
+2025-10-25,gasto,marketing,80000,Publicidad redes
+2025-10-30,gasto,sueldos,300000,Sueldo ayudante
+2025-11-03,ingreso,ventas,120000,Venta tienda
+2025-11-04,gasto,arriendo,350000,Arriendo local
+2025-11-08,ingreso,ventas,165000,Venta online
+2025-11-12,ingreso,servicios,260000,Asesoría mensual
+2025-11-16,gasto,proveedores,175000,Compra insumos
+2025-11-20,ingreso,ventas,98000,Venta tienda
+2025-11-24,gasto,marketing,90000,Publicidad redes
+2025-11-28,gasto,sueldos,300000,Sueldo ayudante

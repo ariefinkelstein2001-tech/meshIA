@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "//": "Cron del resumen semanal DESACTIVADO durante pruebas para no enviar correos reales.",
+  "//crons": [
+    {
+      "path": "/api/resumen",
+      "schedule": "0 13 * * 1"
+    }
+  ],
+  "crons": []
+}

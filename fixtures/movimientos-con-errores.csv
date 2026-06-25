@@ -1,0 +1,9 @@
+fecha,tipo,categoria,monto,descripcion
+2025-11-03,ingreso,ventas,120000,Venta tienda
+03/11/2025,gasto,arriendo,$350.000,Arriendo local (formato chileno)
+2025-13-40,ingreso,ventas,50000,Fecha inválida (se omite)
+2025-11-06,propina,otros,10000,Tipo desconocido (se omite)
+2025-11-07,gasto,,40000,Categoría vacía (se omite)
+2025-11-08,ingreso,ventas,abc,Monto no numérico (se omite)
+2025-11-09,gasto,marketing,-5000,Monto negativo (se omite)
+2025-11-10,ingreso,servicios,260000,Asesoría
