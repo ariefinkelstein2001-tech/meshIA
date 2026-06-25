@@ -139,5 +139,7 @@ acepta fechas `YYYY-MM-DD` y `DD/MM/YYYY`, y montos con `$`/puntos de miles.
 - **Token `--danger`** (`#b3412c`): extensión de paleta — el §5 no define un rojo.
   Se usa solo para flujo negativo y estados de error, afinado con los verdes.
 - **Cron desactivado**: `vercel.json` tiene `crons: []` para no enviar correos
-  reales durante pruebas. Para reactivarlo, mover el bloque `//crons` a `crons`.
-  El resumen se puede disparar manualmente con `pnpm resumen <empresaId>`.
+  reales durante pruebas. Para reactivarlo, agrega al array `crons` el objeto
+  `{ "path": "/api/resumen", "schedule": "0 13 * * 1" }`. (Vercel no admite
+  comentarios ni claves extra en `vercel.json`.) El resumen igual se puede
+  disparar a mano con `pnpm resumen <empresaId>`.
