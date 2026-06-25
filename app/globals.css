@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Tokens del sistema de diseño meshIA (§5 del brief) */
+  --ink: #14201c; /* texto / oscuros */
+  --canvas: #edf0ea; /* fondo */
+  --paper: #fbfcfa; /* tarjetas */
+  --brand: #0f7a5a; /* verde primario */
+  --brand-deep: #0a5a42;
+  --accent: #f0a92b; /* ámbar, acento cálido */
+  --line: #d6dcd4; /* bordes hairline */
+  --muted: #586860; /* texto secundario */
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  /* Foco visible por teclado (accesibilidad, §5) */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* Respeta prefers-reduced-motion (§5) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Cifras tabulares para montos */
+.tabular {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
