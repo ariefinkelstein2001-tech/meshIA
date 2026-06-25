@@ -118,5 +118,13 @@ acepta fechas `YYYY-MM-DD` y `DD/MM/YYYY`, y montos con `$`/puntos de miles.
 
 - Sin dependencias pesadas fuera del stack del brief. El parser CSV es propio
   (sin librerías) para mantener liviano el bundle.
-- Deploy: conectar el repo a Vercel, setear las env vars y desplegar. El cron del
-  resumen semanal corre los lunes 13:00 UTC (`vercel.json`).
+- Deploy: conectar el repo a Vercel, setear las env vars y desplegar.
+- **Diseño**: toda la app (no solo la landing) usa los tokens del §5 y las fuentes
+  Bricolage / Inter / Space Mono. Los montos van siempre en Space Mono (tabular).
+  Componentes compartidos en `components/ui.tsx` (`Button`, `Card`, `Field`,
+  `Pill`) y `components/StatCard.tsx` (KPIs).
+- **Token `--danger`** (`#b3412c`): extensión de paleta — el §5 no define un rojo.
+  Se usa solo para flujo negativo y estados de error, afinado con los verdes.
+- **Cron desactivado**: `vercel.json` tiene `crons: []` para no enviar correos
+  reales durante pruebas. Para reactivarlo, mover el bloque `//crons` a `crons`.
+  El resumen se puede disparar manualmente con `pnpm resumen <empresaId>`.

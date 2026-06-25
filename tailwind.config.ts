@@ -19,6 +19,10 @@ const config: Config = {
         accent: "var(--accent)",
         line: "var(--line)",
         muted: "var(--muted)",
+        danger: {
+          DEFAULT: "var(--danger)",
+          deep: "var(--danger-deep)",
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],

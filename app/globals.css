@@ -12,6 +12,11 @@
   --accent: #f0a92b; /* ámbar, acento cálido */
   --line: #d6dcd4; /* bordes hairline */
   --muted: #586860; /* texto secundario */
+
+  /* Extensión de paleta (no está en §5): rojo ladrillo afinado con los verdes,
+     solo para pérdidas/errores. Documentado en el README. */
+  --danger: #b3412c;
+  --danger-deep: #8f3220;
 }
 
 @layer base {

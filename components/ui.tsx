@@ -4,11 +4,11 @@ import type { ComponentProps, ReactNode } from "react";
 type Variant = "primary" | "secondary" | "ghost";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-pill px-5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-pill px-5 py-2.5 text-sm font-semibold transition-all duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand text-paper hover:bg-brand-deep",
-  secondary: "bg-paper text-ink border border-line hover:border-brand",
+  primary: "bg-brand text-paper shadow-card hover:bg-brand-deep hover:shadow-md",
+  secondary: "bg-paper text-ink border border-line hover:border-brand hover:text-brand-deep",
   ghost: "text-ink hover:bg-paper/60",
 };
 
@@ -34,14 +34,20 @@ export function ButtonLink({
 
 export function Card({
   className = "",
+  hover = false,
   children,
 }: {
   className?: string;
+  hover?: boolean;
   children: ReactNode;
 }) {
   return (
     <div
-      className={`rounded-card border border-line bg-paper p-5 shadow-card ${className}`}
+      className={`rounded-card border border-line bg-paper p-5 shadow-card ${
+        hover
+          ? "transition-shadow duration-200 hover:shadow-md motion-reduce:transition-none"
+          : ""
+      } ${className}`}
     >
       {children}
     </div>
@@ -51,6 +57,32 @@ export function Card({
 export function Badge({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex items-center rounded-pill border border-line bg-paper px-3 py-1 text-xs font-medium text-muted">
+      {children}
+    </span>
+  );
+}
+
+type PillTono = "bueno" | "alerta" | "danger" | "neutro";
+
+const pillTonos: Record<PillTono, string> = {
+  bueno: "bg-brand/10 text-brand-deep",
+  alerta: "bg-accent/15 text-[var(--danger-deep)]",
+  danger: "bg-danger/10 text-danger-deep",
+  neutro: "bg-canvas text-muted border border-line",
+};
+
+/** Pill compacto para % de cambio y etiquetas de estado (mono, numérico). */
+export function Pill({
+  tono = "neutro",
+  children,
+}: {
+  tono?: PillTono;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={`tabular inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-medium ${pillTonos[tono]}`}
+    >
       {children}
     </span>
   );

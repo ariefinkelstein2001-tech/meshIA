@@ -5,9 +5,11 @@ import {
   AreaChart,
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
+  ComposedChart,
+  Legend,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,12 +17,26 @@ import {
 } from "recharts";
 import { formatCLP } from "@/lib/format";
 
+// Paleta del brief §5 (nada de colores default de Recharts).
 const BRAND = "#0f7a5a";
+const BRAND_DEEP = "#0a5a42";
 const ACCENT = "#f0a92b";
+const INK = "#14201c";
 const MUTED = "#586860";
 const LINE = "#d6dcd4";
 
-const PALETA = [BRAND, ACCENT, "#0a5a42", "#86a397", "#c98a1f", "#3f5b50"];
+const PALETA = [BRAND, ACCENT, BRAND_DEEP, "#86a397", "#c98a1f", "#3f5b50"];
+
+const MONO = "var(--font-mono), ui-monospace, monospace";
+
+const tickMono = { fill: MUTED, fontSize: 11, fontFamily: MONO };
+const tooltipStyle = {
+  borderRadius: 14,
+  border: `1px solid ${LINE}`,
+  fontSize: 12,
+  boxShadow: "0 8px 24px rgba(20,32,28,0.10)",
+  fontFamily: MONO,
+};
 
 function montoCorto(n: number): string {
   if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
@@ -28,44 +44,60 @@ function montoCorto(n: number): string {
   return `$${n}`;
 }
 
-/** Ingresos vs gastos por mes (líneas). */
+function leyenda(value: string) {
+  return <span className="text-xs text-muted">{value}</span>;
+}
+
+/** Ingresos (área) vs gastos (línea) por mes. */
 export function IngresosPorMes({
   data,
 }: {
   data: { etiqueta: string; ingresos: number; gastos: number }[];
 }) {
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+    <ResponsiveContainer width="100%" height={240}>
+      <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+        <defs>
+          <linearGradient id="gradIngresos" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={BRAND} stopOpacity={0.22} />
+            <stop offset="100%" stopColor={BRAND} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid stroke={LINE} strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="etiqueta"
-          tick={{ fill: MUTED, fontSize: 12 }}
+          tick={tickMono}
           axisLine={{ stroke: LINE }}
           tickLine={false}
+          dy={4}
         />
         <YAxis
           tickFormatter={montoCorto}
-          tick={{ fill: MUTED, fontSize: 12 }}
+          tick={tickMono}
           axisLine={false}
           tickLine={false}
           width={48}
         />
         <Tooltip
           formatter={(v: number) => formatCLP(v)}
-          labelStyle={{ color: "#14201c" }}
-          contentStyle={{
-            borderRadius: 12,
-            border: `1px solid ${LINE}`,
-            fontSize: 12,
-          }}
+          labelStyle={{ color: INK, fontFamily: MONO }}
+          contentStyle={tooltipStyle}
+          cursor={{ stroke: LINE, strokeWidth: 1 }}
         />
-        <Line
+        <Legend
+          formatter={leyenda}
+          iconType="plainline"
+          wrapperStyle={{ paddingTop: 8 }}
+        />
+        <Area
           type="monotone"
           dataKey="ingresos"
           name="Ingresos"
           stroke={BRAND}
           strokeWidth={2.5}
+          fill="url(#gradIngresos)"
           dot={false}
+          activeDot={{ r: 4, fill: BRAND }}
         />
         <Line
           type="monotone"
@@ -74,8 +106,9 @@ export function IngresosPorMes({
           stroke={ACCENT}
           strokeWidth={2}
           dot={false}
+          activeDot={{ r: 4, fill: ACCENT }}
         />
-      </LineChart>
+      </ComposedChart>
     </ResponsiveContainer>
   );
 }
@@ -87,7 +120,7 @@ export function GastosPorCategoria({
   data: { categoria: string; monto: number }[];
 }) {
   return (
-    <ResponsiveContainer width="100%" height={Math.max(180, data.length * 38)}>
+    <ResponsiveContainer width="100%" height={Math.max(180, data.length * 42)}>
       <BarChart
         data={data}
         layout="vertical"
@@ -97,21 +130,17 @@ export function GastosPorCategoria({
         <YAxis
           type="category"
           dataKey="categoria"
-          tick={{ fill: "#14201c", fontSize: 12 }}
+          tick={{ fill: INK, fontSize: 12 }}
           axisLine={false}
           tickLine={false}
-          width={96}
+          width={100}
         />
         <Tooltip
           formatter={(v: number) => formatCLP(v)}
-          contentStyle={{
-            borderRadius: 12,
-            border: `1px solid ${LINE}`,
-            fontSize: 12,
-          }}
+          contentStyle={tooltipStyle}
           cursor={{ fill: "rgba(15,122,90,0.06)" }}
         />
-        <Bar dataKey="monto" name="Gasto" radius={[0, 6, 6, 0]}>
+        <Bar dataKey="monto" name="Gasto" radius={[0, 6, 6, 0]} barSize={22}>
           {data.map((_, i) => (
             <Cell key={i} fill={PALETA[i % PALETA.length]} />
           ))}
@@ -125,14 +154,21 @@ export function GastosPorCategoria({
 export function Sparkline({ data }: { data: number[] }) {
   const puntos = data.map((v, i) => ({ i, v }));
   return (
-    <ResponsiveContainer width="100%" height={40}>
-      <AreaChart data={puntos} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+    <ResponsiveContainer width="100%" height={48}>
+      <AreaChart data={puntos} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+        <defs>
+          <linearGradient id="gradSpark" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={BRAND} stopOpacity={0.2} />
+            <stop offset="100%" stopColor={BRAND} stopOpacity={0} />
+          </linearGradient>
+        </defs>
         <Area
           type="monotone"
           dataKey="v"
           stroke={BRAND}
           strokeWidth={2}
-          fill="rgba(15,122,90,0.12)"
+          fill="url(#gradSpark)"
+          dot={false}
         />
       </AreaChart>
     </ResponsiveContainer>
