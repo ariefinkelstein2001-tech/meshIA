@@ -10,7 +10,8 @@ import { esEmailValido } from "@/lib/validate";
 
 function LoginInner() {
   const params = useSearchParams();
-  const redirectTo = params.get("redirectTo") ?? "/dashboard";
+  const redirectTo = params.get("redirectTo") ?? "/clientes";
+  const sinAcceso = params.get("error") === "sin_acceso";
 
   const [email, setEmail] = useState("");
   const [estado, setEstado] = useState<"idle" | "enviando" | "ok" | "error">(
@@ -55,10 +56,23 @@ function LoginInner() {
         </Link>
 
         <div className="rounded-card border border-line bg-paper p-6 shadow-card">
-          <h1 className="font-display text-2xl font-bold text-ink">Entrar</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">
+            Acceso equipo meshIA
+          </h1>
           <p className="mt-1 text-sm text-muted">
-            Te mandamos un enlace mágico al correo. Sin contraseñas.
+            Consola interna. Te mandamos un enlace mágico al correo. Sin
+            contraseñas.
           </p>
+
+          {sinAcceso ? (
+            <div
+              className="mt-5 rounded-soft border border-danger/30 bg-danger/5 p-4 text-sm text-danger-deep"
+              role="alert"
+            >
+              Ese correo no tiene acceso a la consola. Pídele a tu equipo que te
+              agregue como operador.
+            </div>
+          ) : null}
 
           {estado === "ok" ? (
             <div
@@ -81,7 +95,7 @@ function LoginInner() {
                 />
               </Field>
               {estado === "error" ? (
-                <p className="text-sm text-red-700" role="alert">
+                <p className="text-sm text-danger-deep" role="alert">
                   {mensaje}
                 </p>
               ) : null}
@@ -97,7 +111,7 @@ function LoginInner() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted">
-          ¿Aún no tienes cuenta? Con el mismo enlace creamos tu empresa.
+          Solo para el equipo meshIA. ¿Eres cliente? Pídenos tu link de panel.
         </p>
       </div>
     </main>

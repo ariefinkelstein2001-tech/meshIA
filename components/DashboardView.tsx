@@ -1,44 +1,28 @@
-import Link from "next/link";
-import { getEmpresaActual } from "@/lib/empresa";
-import { createClient } from "@/lib/supabase/server";
-import { calcularMetricas } from "@/lib/metrics";
 import { formatCLP, formatCLPSigned, formatPct } from "@/lib/format";
-import { puedeUsarPulso } from "@/lib/planes";
-import type { Transaccion } from "@/lib/types";
+import type { MetricasDashboard } from "@/lib/metrics";
+import type { Empresa } from "@/lib/types";
 import { Card, ButtonLink, Pill } from "@/components/ui";
 import { StatCard, type KpiPill } from "@/components/StatCard";
-import {
-  IngresosPorMes,
-  GastosPorCategoria,
-  Sparkline,
-} from "@/components/charts";
+import { IngresosPorMes, GastosPorCategoria, Sparkline } from "@/components/charts";
 
-export default async function DashboardPage() {
-  const { empresa } = await getEmpresaActual();
-
-  // Gating (Fase 5): si el plan no incluye Pulso, mostramos un aviso claro.
-  if (!puedeUsarPulso(empresa.plan)) {
-    return <SinPulso />;
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("transacciones")
-    .select("*")
-    .eq("empresa_id", empresa.id)
-    .order("fecha", { ascending: true });
-
-  if (error) {
-    return <EstadoError />;
-  }
-
-  const transacciones = (data ?? []) as Transaccion[];
-  const m = calcularMetricas(transacciones);
-
-  if (!m.hayDatos) {
-    return <EstadoVacio />;
-  }
-
+/**
+ * Panel Pulso (presentacional). Reutilizado por:
+ *  - la consola interna (operador): /clientes/[id]/dashboard
+ *  - el link público de solo lectura: /r/[token]
+ *
+ * En modo "publico" no muestra el botón de editar datos.
+ */
+export function DashboardView({
+  empresa,
+  m,
+  modo = "operador",
+  datosHref,
+}: {
+  empresa: Empresa;
+  m: MetricasDashboard;
+  modo?: "operador" | "publico";
+  datosHref?: string;
+}) {
   const crec = m.crecimientoIngresos;
   const crecFinito = Number.isFinite(crec);
 
@@ -73,9 +57,11 @@ export default async function DashboardPage() {
           <h1 className="font-display text-2xl font-bold text-ink">Pulso</h1>
           <p className="text-sm text-muted">{empresa.nombre} · mes en curso</p>
         </div>
-        <ButtonLink href="/datos" variant="secondary">
-          Actualizar datos
-        </ButtonLink>
+        {modo === "operador" && datosHref ? (
+          <ButtonLink href={datosHref} variant="secondary">
+            Actualizar datos
+          </ButtonLink>
+        ) : null}
       </header>
 
       {/* KPIs */}
@@ -162,7 +148,7 @@ export default async function DashboardPage() {
 }
 
 /** Ícono cuadrícula reutilizado en los estados (consistente con la marca). */
-function IconoPanel({ className = "" }: { className?: string }) {
+export function IconoPanel({ className = "" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -180,64 +166,31 @@ function IconoPanel({ className = "" }: { className?: string }) {
   );
 }
 
-function EstadoVacio() {
+export function EstadoVacioPanel({
+  datosHref,
+  modo = "operador",
+}: {
+  datosHref?: string;
+  modo?: "operador" | "publico";
+}) {
   return (
     <div className="mx-auto max-w-md py-16 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card bg-brand/10 text-brand">
         <IconoPanel className="h-7 w-7" />
       </div>
       <h1 className="font-display text-xl font-bold text-ink">
-        Aún no hay datos en tu Pulso
+        Aún no hay datos en este Pulso
       </h1>
       <p className="mt-2 text-sm text-muted">
-        Conecta un Google Sheet o sube un CSV con tus ventas y gastos. En cuanto
-        carguen, verás aquí tus números del mes.
+        {modo === "operador"
+          ? "Conecta un Google Sheet o sube un CSV con las ventas y gastos del cliente."
+          : "Tu panel está listo, pero todavía no tiene movimientos cargados."}
       </p>
-      <div className="mt-6">
-        <ButtonLink href="/datos">Conectar mis datos</ButtonLink>
-      </div>
-    </div>
-  );
-}
-
-function EstadoError() {
-  return (
-    <div className="mx-auto max-w-md py-16">
-      <Card className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card bg-danger/10 text-danger-deep">
-          <IconoPanel className="h-7 w-7" />
+      {modo === "operador" && datosHref ? (
+        <div className="mt-6">
+          <ButtonLink href={datosHref}>Conectar datos</ButtonLink>
         </div>
-        <h1 className="font-display text-xl font-bold text-ink">
-          No pudimos cargar tus datos
-        </h1>
-        <p className="mt-2 text-sm text-muted">
-          Hubo un problema al leer tu Pulso. Recarga la página en un rato; si
-          sigue pasando, escríbenos.
-        </p>
-      </Card>
-    </div>
-  );
-}
-
-function SinPulso() {
-  return (
-    <div className="mx-auto max-w-md py-16 text-center">
-      <h1 className="font-display text-xl font-bold text-ink">
-        Pulso no está en tu plan
-      </h1>
-      <p className="mt-2 text-sm text-muted">
-        Tu plan actual no incluye el dashboard Pulso. Cámbiate a Pulso o Pro
-        para ver tus números.
-      </p>
-      <div className="mt-6 flex justify-center gap-3">
-        <ButtonLink href="/config">Cambiar de plan</ButtonLink>
-        <Link
-          href="/planes"
-          className="inline-flex items-center px-4 py-2 text-sm text-muted hover:text-ink"
-        >
-          Ver planes
-        </Link>
-      </div>
+      ) : null}
     </div>
   );
 }

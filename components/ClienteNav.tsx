@@ -3,18 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const LINKS = [
-  { href: "/dashboard", label: "Pulso" },
-  { href: "/datos", label: "Datos" },
-  { href: "/config", label: "Ajustes" },
-];
-
-export function AppNav() {
+export function ClienteNav({ empresaId }: { empresaId: string }) {
   const pathname = usePathname();
+  const base = `/clientes/${empresaId}`;
+  const links = [
+    { href: `${base}/dashboard`, label: "Pulso" },
+    { href: `${base}/datos`, label: "Datos" },
+    { href: `${base}/config`, label: "Ajustes" },
+  ];
 
   return (
-    <nav className="mx-auto flex max-w-page gap-1 px-3 pb-1">
-      {LINKS.map((l) => {
+    <nav className="flex gap-1">
+      {links.map((l) => {
         const activo = pathname === l.href || pathname.startsWith(`${l.href}/`);
         return (
           <Link

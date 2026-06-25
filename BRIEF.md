@@ -129,6 +129,13 @@ Planillas de ejemplo en `/fixtures`.
 - **Fase 5 — Planes (gating, sin cobro).** Features limitadas según `empresa.plan`.
   Stubs e interfaces para banco (Fintoc), SII y pagos (Flow / Mercado Pago /
   Webpay — **Stripe no opera tarjetas locales en Chile, no usarlo**).
+- **Fase 6 — Consola interna (hecho-para-ti).** La app autenticada es para el
+  **equipo meshIA**, no para las pymes. Un **operador** (allowlist `operadores`)
+  administra muchas pymes en `/clientes`, conecta sus datos y arma su Pulso.
+  La pyme **no inicia sesión**: recibe un **link público de solo lectura**
+  `/r/[token]` (token UUID inadivinable, activable/regenerable desde Ajustes).
+  Cambios de modelo: `empresas` gana `public_token`, `panel_publico`, `created_by`;
+  RLS por `es_operador()`; se elimina el trigger de auto-crear empresa.
 
 ## 10. Reglas
 

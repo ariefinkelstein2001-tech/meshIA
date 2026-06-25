@@ -1,18 +1,29 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
-import { conectarFuente } from "./actions";
 import { Button, Card, Field, inputClass } from "@/components/ui";
 import type { ResultadoIngesta } from "@/lib/ingesta";
 
 type Tab = "sheet" | "csv";
 
-export function DatosForm() {
+type Accion = (
+  prev: ResultadoIngesta | null,
+  formData: FormData,
+) => Promise<ResultadoIngesta>;
+
+/** Conecta un Sheet o sube un CSV para una empresa (cliente) dada. */
+export function DatosForm({
+  empresaId,
+  action,
+}: {
+  empresaId: string;
+  action: Accion;
+}) {
   const [tab, setTab] = useState<Tab>("sheet");
   const [estado, formAction, pending] = useActionState<
     ResultadoIngesta | null,
     FormData
-  >(conectarFuente, null);
+  >(action, null);
 
   return (
     <div className="space-y-5">
@@ -27,9 +38,9 @@ export function DatosForm() {
 
       <Card>
         {tab === "sheet" ? (
-          <SheetForm action={formAction} pending={pending} />
+          <SheetForm action={formAction} pending={pending} empresaId={empresaId} />
         ) : (
-          <CsvForm action={formAction} pending={pending} />
+          <CsvForm action={formAction} pending={pending} empresaId={empresaId} />
         )}
       </Card>
 
@@ -63,15 +74,18 @@ function TabBtn({
 function SheetForm({
   action,
   pending,
+  empresaId,
 }: {
   action: (fd: FormData) => void;
   pending: boolean;
+  empresaId: string;
 }) {
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="tipo" value="sheet" />
+      <input type="hidden" name="empresaId" value={empresaId} />
       <Field
-        label="URL de tu Google Sheet"
+        label="URL del Google Sheet"
         hint="Publica la planilla (Archivo → Compartir → Publicar en la web) o compártela como 'cualquiera con el enlace'."
       >
         <input
@@ -92,9 +106,11 @@ function SheetForm({
 function CsvForm({
   action,
   pending,
+  empresaId,
 }: {
   action: (fd: FormData) => void;
   pending: boolean;
+  empresaId: string;
 }) {
   const [contenido, setContenido] = useState("");
   const [nombre, setNombre] = useState("");
@@ -112,6 +128,7 @@ function CsvForm({
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="tipo" value="csv" />
+      <input type="hidden" name="empresaId" value={empresaId} />
       <input type="hidden" name="contenido" value={contenido} />
 
       <div>
@@ -153,12 +170,12 @@ function Resultado({ estado }: { estado: ResultadoIngesta }) {
   return (
     <Card
       className={
-        estado.ok ? "border-brand/30 bg-brand/5" : "border-red-300 bg-red-50"
+        estado.ok ? "border-brand/30 bg-brand/5" : "border-danger/30 bg-danger/5"
       }
     >
       <p
         className={`text-sm font-medium ${
-          estado.ok ? "text-brand-deep" : "text-red-800"
+          estado.ok ? "text-brand-deep" : "text-danger-deep"
         }`}
         role="status"
       >
@@ -170,7 +187,7 @@ function Resultado({ estado }: { estado: ResultadoIngesta }) {
           <p className="text-xs font-medium text-muted">
             Filas con problemas ({estado.errores.length}):
           </p>
-          <ul className="mt-1 max-h-48 space-y-1 overflow-auto text-xs text-red-800">
+          <ul className="mt-1 max-h-48 space-y-1 overflow-auto text-xs text-danger-deep">
             {estado.errores.slice(0, 50).map((e, i) => (
               <li key={i}>
                 Fila {e.fila}: {e.mensaje}

@@ -9,7 +9,12 @@ export interface Empresa {
   nombre: string;
   slug: string;
   plan: Plan;
-  owner_user_id: string;
+  owner_user_id: string | null;
+  created_by: string | null;
+  /** Token inadivinable para el link público de solo lectura (/r/[token]). */
+  public_token: string;
+  /** Si el panel público está habilitado para compartir. */
+  panel_publico: boolean;
   created_at: string;
 }
 

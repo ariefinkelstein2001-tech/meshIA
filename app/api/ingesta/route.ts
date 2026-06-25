@@ -5,8 +5,8 @@ import type { Empresa, TipoFuente } from "@/lib/types";
 
 /**
  * POST /api/ingesta — versión programática de la ingesta (§4).
- * Body: { tipo: 'sheet'|'csv', url?, contenido? }
- * Requiere sesión; opera sobre la empresa del usuario (RLS).
+ * Body: { empresaId, tipo: 'sheet'|'csv', url?, contenido? }
+ * Requiere sesión de operador; la RLS limita a operadores del equipo.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -14,27 +14,28 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!user?.email) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
-  const { data: empresa } = await supabase
-    .from("empresas")
-    .select("*")
-    .eq("owner_user_id", user.id)
-    .single();
-  if (!empresa) {
-    return NextResponse.json(
-      { error: "No encontramos tu empresa." },
-      { status: 404 },
-    );
+  const { data: operador } = await supabase
+    .from("operadores")
+    .select("email")
+    .eq("email", user.email.toLowerCase())
+    .maybeSingle();
+  if (!operador) {
+    return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
-  let body: { tipo?: string; url?: string; contenido?: string };
+  let body: { empresaId?: string; tipo?: string; url?: string; contenido?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Body inválido." }, { status: 400 });
+  }
+
+  if (!body.empresaId) {
+    return NextResponse.json({ error: "Falta empresaId." }, { status: 400 });
   }
 
   const tipo = body.tipo as TipoFuente;
@@ -43,6 +44,15 @@ export async function POST(request: Request) {
       { error: "tipo debe ser 'sheet' o 'csv'." },
       { status: 400 },
     );
+  }
+
+  const { data: empresa } = await supabase
+    .from("empresas")
+    .select("*")
+    .eq("id", body.empresaId)
+    .maybeSingle();
+  if (!empresa) {
+    return NextResponse.json({ error: "Empresa no encontrada." }, { status: 404 });
   }
 
   const config =

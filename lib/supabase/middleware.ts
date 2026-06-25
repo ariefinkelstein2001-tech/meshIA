@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
-/** Rutas que requieren sesión iniciada. */
-const RUTAS_PROTEGIDAS = ["/dashboard", "/datos", "/config"];
+/** Rutas que requieren sesión de operador (consola interna). */
+const RUTAS_PROTEGIDAS = ["/clientes"];
 
 /**
  * Refresca la sesión de Supabase en cada request y protege las rutas privadas.

@@ -62,7 +62,20 @@ export async function enviarResumenes(opciones?: {
       hoy,
     );
 
-    // Email del dueño vía Admin API.
+    // En el modelo de consola interna (Fase 6) las pymes no tienen cuenta, así
+    // que normalmente no hay correo asociado. El email queda como canal futuro
+    // (la entrega principal es el link público /r/[token]). Si la empresa tiene
+    // un owner con correo, igual se lo enviamos.
+    if (!empresa.owner_user_id) {
+      resultados.push({
+        empresa: empresa.nombre,
+        email: null,
+        enviado: false,
+        motivo: "Sin correo de contacto (entrega vía link público).",
+      });
+      continue;
+    }
+
     const { data: userData } = await supabase.auth.admin.getUserById(
       empresa.owner_user_id,
     );

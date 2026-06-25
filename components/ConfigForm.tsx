@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { actualizarEmpresa } from "./actions";
 import { PLANES_LISTA } from "@/lib/planes";
 import { formatCLP } from "@/lib/format";
 import { Button, Field, inputClass } from "@/components/ui";
 import type { Empresa } from "@/lib/types";
 
-export function ConfigForm({ empresa }: { empresa: Empresa }) {
+type Accion = (formData: FormData) => Promise<{ error?: string; ok?: boolean }>;
+
+/** Edita nombre y plan de una empresa (cliente). */
+export function ConfigForm({
+  empresa,
+  action,
+}: {
+  empresa: Empresa;
+  action: Accion;
+}) {
   const [pending, startTransition] = useTransition();
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
     null,
@@ -16,7 +24,7 @@ export function ConfigForm({ empresa }: { empresa: Empresa }) {
   function onSubmit(formData: FormData) {
     setMensaje(null);
     startTransition(async () => {
-      const res = await actualizarEmpresa(formData);
+      const res = await action(formData);
       if (res?.error) {
         setMensaje({ tipo: "error", texto: res.error });
       } else {
@@ -27,6 +35,7 @@ export function ConfigForm({ empresa }: { empresa: Empresa }) {
 
   return (
     <form action={onSubmit} className="space-y-6">
+      <input type="hidden" name="empresaId" value={empresa.id} />
       <Field label="Nombre de la empresa">
         <input
           name="nombre"
@@ -42,7 +51,7 @@ export function ConfigForm({ empresa }: { empresa: Empresa }) {
           {PLANES_LISTA.map((plan) => (
             <label
               key={plan.id}
-              className="flex cursor-pointer items-start gap-3 rounded-soft border border-line bg-paper p-3 has-[:checked]:border-brand has-[:checked]:ring-1 has-[:checked]:ring-brand"
+              className="flex cursor-pointer items-start gap-3 rounded-soft border border-line bg-paper p-3 transition-colors has-[:checked]:border-brand has-[:checked]:ring-1 has-[:checked]:ring-brand"
             >
               <input
                 type="radio"
@@ -63,8 +72,8 @@ export function ConfigForm({ empresa }: { empresa: Empresa }) {
           ))}
         </div>
         <p className="text-xs text-muted">
-          Cambiar el plan ajusta qué puedes hacer (ej. cuántas fuentes conectar).
-          Aún no se cobra.
+          Cambiar el plan ajusta qué puede hacer el cliente (ej. cuántas fuentes
+          conectar). Aún no se cobra.
         </p>
       </fieldset>
 
@@ -76,7 +85,7 @@ export function ConfigForm({ empresa }: { empresa: Empresa }) {
           <span
             role="status"
             className={`text-sm ${
-              mensaje.tipo === "ok" ? "text-brand-deep" : "text-red-700"
+              mensaje.tipo === "ok" ? "text-brand-deep" : "text-danger-deep"
             }`}
           >
             {mensaje.texto}

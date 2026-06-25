@@ -1,14 +1,21 @@
-import { getEmpresaActual } from "@/lib/empresa";
+import { requireOperador, getEmpresaPorId } from "@/lib/operador";
 import { createClient } from "@/lib/supabase/server";
 import { formatFecha } from "@/lib/format";
 import { Card } from "@/components/ui";
-import { DatosForm } from "./DatosForm";
+import { DatosForm } from "@/components/DatosForm";
+import { conectarFuente } from "./actions";
 import type { Fuente } from "@/lib/types";
 
-export default async function DatosPage() {
-  const { empresa } = await getEmpresaActual();
-  const supabase = await createClient();
+export default async function ClienteDatos({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  await requireOperador();
+  const { id } = await params;
+  const empresa = await getEmpresaPorId(id);
 
+  const supabase = await createClient();
   const { data: fuentes } = await supabase
     .from("fuentes")
     .select("*")
@@ -20,22 +27,22 @@ export default async function DatosPage() {
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-bold text-ink">Datos</h1>
+        <h2 className="font-display text-xl font-bold text-ink">Datos</h2>
         <p className="mt-1 text-sm text-muted">
-          Conecta tus ventas y gastos. Cada vez que sincronizas, reemplazamos los
-          datos de esa fuente con la versión más nueva.
+          Conecta las ventas y gastos del cliente. Cada sincronización reemplaza
+          los datos de esa fuente con la versión más nueva.
         </p>
       </div>
 
-      <DatosForm />
+      <DatosForm empresaId={empresa.id} action={conectarFuente} />
 
       <section>
-        <h2 className="mb-3 font-display text-base font-bold text-ink">
+        <h3 className="mb-3 font-display text-base font-bold text-ink">
           Fuentes conectadas
-        </h2>
+        </h3>
         {lista.length === 0 ? (
           <p className="text-sm text-muted">
-            Todavía no conectas ninguna fuente.
+            Todavía no hay ninguna fuente conectada.
           </p>
         ) : (
           <div className="space-y-2">

@@ -27,7 +27,8 @@ pnpm dev                      # http://localhost:3000
 
 1. Crea un proyecto en [Supabase](https://supabase.com) (free tier).
 2. En **SQL Editor**, pega y corre [`supabase/schema.sql`](./supabase/schema.sql).
-   Crea las tablas, RLS y el trigger que crea una empresa al registrarse.
+   Crea las tablas, la RLS y la tabla `operadores` (allowlist del equipo).
+   **Edita la semilla** del final con los correos de tus operadores.
 3. En **Authentication → URL Configuration**, agrega
    `http://localhost:3000/auth/callback` (y tu dominio de Vercel) como redirect.
 
@@ -59,24 +60,29 @@ pnpm resumen      # dispara el resumen semanal (todas o `pnpm resumen <empresaId
 
 ```
 app/
-  (marketing)/        landing + /planes (públicas)
-  (app)/dashboard     panel Pulso (requiere login)
-  (app)/datos         conectar Google Sheet / subir CSV
-  (app)/config        ajustes de la empresa y plan
-  login, auth/        magic link + callback + signout
-  api/                waitlist, ingesta, resumen
-components/           UI, charts (Recharts), secciones de marketing
+  (marketing)/             landing + /planes (públicas)
+  (app)/clientes           consola interna: lista de clientes (operador)
+  (app)/clientes/nuevo     crear cliente
+  (app)/clientes/[id]/     dashboard · datos · config por cliente
+  r/[token]                panel público de solo lectura (lo que ve la pyme)
+  login, auth/             magic link del equipo + callback + signout
+  api/                     waitlist, ingesta, resumen
+components/
+  DashboardView.tsx        panel Pulso reutilizado (consola + link público)
+  DatosForm, ConfigForm, SharePanel, ClienteNav, charts, ui, StatCard
 lib/
-  format.ts           formato CLP es-CL
-  parsers.ts          parser de planillas con validación en español
-  metrics.ts          cálculos del dashboard
-  resumen.ts          texto del resumen semanal
-  planes.ts           catálogo de planes + reglas de gating
-  supabase/           clients (browser, server, middleware)
-  adapters/           sheet, csv (implementados) + banco, sii, pagos (stubs)
-fixtures/             planillas CSV de ejemplo
-supabase/schema.sql   esquema + RLS + triggers
-scripts/resumen.ts    runner manual del resumen semanal
+  format.ts                formato CLP es-CL
+  parsers.ts               parser de planillas con validación en español
+  metrics.ts               cálculos del dashboard
+  resumen.ts               texto del resumen semanal
+  planes.ts                catálogo de planes + reglas de gating
+  operador.ts              sesión de operador + acceso a empresas (consola)
+  ingesta.ts               núcleo de la ingesta (Sheet/CSV → transacciones)
+  supabase/                clients (browser, server, middleware)
+  adapters/                sheet, csv (implementados) + banco, sii, pagos (stubs)
+fixtures/                  planillas CSV de ejemplo
+supabase/schema.sql        esquema + RLS + operadores
+scripts/resumen.ts         runner manual del resumen semanal
 ```
 
 ## Datos del cliente
@@ -100,14 +106,21 @@ acepta fechas `YYYY-MM-DD` y `DD/MM/YYYY`, y montos con `$`/puntos de miles.
       Vercel (`vercel.json`), stub `enviarWhatsapp()`, `pnpm resumen`.
 - [x] **Fase 5 — Planes (gating, sin cobro).** Límites por `empresa.plan`
       (fuentes, acceso a Pulso, resumen). Stubs de banco/SII/pagos.
+- [x] **Fase 6 — Consola interna (hecho-para-ti).** La app autenticada es para el
+      **equipo meshIA** (operadores, allowlist en `operadores`): administra muchas
+      pymes en `/clientes`, arma el Pulso de cada una y comparte un **link público
+      de solo lectura** (`/r/[token]`). Las pymes **no inician sesión**.
 
 ## Suposiciones (las simples, como pide el brief)
 
 - **`meshia.html` no estaba en el repo** al iniciar. La landing se reconstruyó
   desde el copy y la estructura descritos en el brief (§7), reutilizando los
   tokens y las secciones. Si aparece el HTML original, se puede afinar el copy.
-- **Un usuario = una empresa** (es el dueño, `owner_user_id`). El modelo soporta
-  crecer a multi-usuario por empresa más adelante.
+- **Consola interna (Fase 6).** Un **operador** (correo en `operadores`) administra
+  **todas** las empresas de los clientes; no hay asignación por-operador todavía.
+  Las pymes no tienen cuenta: reciben el link público `/r/[token]` (token UUID
+  inadivinable, con on/off y regeneración). El acceso público se resuelve
+  server-side con la service role, así la RLS se mantiene simple.
 - **Ingesta = reemplazo por fuente.** Se mantiene una fuente por tipo
   (`sheet`/`csv`) por empresa; cada sincronización reemplaza sus transacciones,
   así re-subir la misma planilla no duplica datos.
