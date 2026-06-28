@@ -137,8 +137,11 @@ vuelve a exigir login + datos reales.
 
 ## Notas
 
-- Sin dependencias pesadas fuera del stack del brief. El parser CSV es propio
-  (sin librerías) para mantener liviano el bundle.
+- El parser CSV es propio (sin librerías). Para leer **Excel (.xlsx)** se usa
+  `read-excel-file` (ligera, parsea en el browser); justificada porque las pymes
+  entregan planillas en Excel. En `/clientes/[id]/datos` puedes **arrastrar** un
+  Excel o CSV y se muestra el **panel al instante** (parseo + métricas en el
+  cliente), antes de guardarlo.
 - Deploy: conectar el repo a Vercel, setear las env vars y desplegar.
 - **Diseño**: toda la app (no solo la landing) usa los tokens del §5 y las fuentes
   Bricolage / Inter / Space Mono. Los montos van siempre en Space Mono (tabular).

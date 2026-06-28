@@ -16,7 +16,14 @@ const COLUMNAS_REQUERIDAS = ["fecha", "tipo", "categoria", "monto"] as const;
 
 /** Parsea texto CSV (o TSV) crudo a movimientos validados. */
 export function parsearPlanilla(texto: string): ResultadoParseo {
-  const filas = parsearCSV(texto);
+  return parsearFilas(parsearCSV(texto));
+}
+
+/**
+ * Valida filas ya separadas (array de arrays). Útil para Excel, donde las
+ * celdas llegan en filas en vez de texto CSV.
+ */
+export function parsearFilas(filas: string[][]): ResultadoParseo {
   const errores: ResultadoParseo["errores"] = [];
 
   if (filas.length === 0) {
