@@ -1,22 +1,20 @@
 import Link from "next/link";
-import { requireOperador, getEmpresas } from "@/lib/operador";
-import { createClient } from "@/lib/supabase/server";
+import {
+  requireOperador,
+  getEmpresas,
+  getTodasLasFuentes,
+} from "@/lib/operador";
 import { PLANES } from "@/lib/planes";
 import { formatFecha } from "@/lib/format";
 import { Card, ButtonLink, Badge, Pill } from "@/components/ui";
 import { IconoPanel } from "@/components/DashboardView";
-import type { Fuente } from "@/lib/types";
 
 export default async function ClientesPage() {
   await requireOperador();
   const empresas = await getEmpresas();
 
   // Resumen de fuentes por empresa (para mostrar última sincronización).
-  const supabase = await createClient();
-  const { data: fuentesData } = await supabase
-    .from("fuentes")
-    .select("empresa_id, last_synced_at");
-  const fuentes = (fuentesData ?? []) as Pick<Fuente, "empresa_id" | "last_synced_at">[];
+  const fuentes = await getTodasLasFuentes();
 
   const resumen = new Map<string, { n: number; ultima: string | null }>();
   for (const f of fuentes) {

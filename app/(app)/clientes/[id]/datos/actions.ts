@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireOperador, getEmpresaPorId } from "@/lib/operador";
 import { ingerir, type ResultadoIngesta } from "@/lib/ingesta";
+import { DEMO_MODE, DEMO_AVISO } from "@/lib/demo";
 
 function falla(mensaje: string): ResultadoIngesta {
   return { ok: false, insertadas: 0, errores: [], totalFilas: 0, mensaje };
@@ -15,6 +16,7 @@ export async function conectarFuente(
   formData: FormData,
 ): Promise<ResultadoIngesta> {
   await requireOperador();
+  if (DEMO_MODE) return falla(DEMO_AVISO);
 
   const empresaId = String(formData.get("empresaId") ?? "");
   const tipo = String(formData.get("tipo") ?? "");

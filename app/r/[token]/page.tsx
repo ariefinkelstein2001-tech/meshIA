@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createServiceClient } from "@/lib/supabase/server";
+import { DEMO_MODE, demoEmpresaPorId, demoTransacciones } from "@/lib/demo";
 import { calcularMetricas } from "@/lib/metrics";
 import { formatFecha } from "@/lib/format";
 import { Logo } from "@/components/Logo";
@@ -18,6 +19,12 @@ export const metadata: Metadata = {
 async function getDatosPublicos(token: string) {
   // UUID válido para evitar errores de query con tokens basura.
   if (!/^[0-9a-fA-F-]{36}$/.test(token)) return null;
+
+  // Modo demo: panel de ejemplo sin base de datos.
+  if (DEMO_MODE) {
+    const empresa = demoEmpresaPorId("a");
+    return { empresa, transacciones: demoTransacciones("a") };
+  }
 
   const supabase = createServiceClient();
   const { data: empresa } = await supabase

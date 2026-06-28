@@ -21,7 +21,7 @@ export default function MarketingLayout({
             >
               Planes
             </Link>
-            <ButtonLink href="/login" variant="secondary" className="hidden sm:inline-flex">
+            <ButtonLink href="/clientes" variant="secondary" className="hidden sm:inline-flex">
               Entrar
             </ButtonLink>
             <ButtonLink href="/#waitlist">Quiero meshIA</ButtonLink>

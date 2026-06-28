@@ -127,6 +127,14 @@ acepta fechas `YYYY-MM-DD` y `DD/MM/YYYY`, y montos con `$`/puntos de miles.
 - **Sin cobro** (Fase 5): los planes solo controlan gating, no hay pasarela.
 - Pagos en Chile previstos: **Flow / Mercado Pago / Webpay** (no Stripe).
 
+## Modo demo (temporal)
+
+Si **no** hay `NEXT_PUBLIC_SUPABASE_URL` configurada, la app entra en **modo demo**
+(`lib/demo.ts`): la consola interna se abre **sin login** y muestra **datos de
+ejemplo** (no se guardan). Sirve para ver/usar el panel antes de conectar la base.
+En cuanto se configuran las llaves de Supabase, el modo demo **se apaga solo** y
+vuelve a exigir login + datos reales.
+
 ## Notas
 
 - Sin dependencias pesadas fuera del stack del brief. El parser CSV es propio

@@ -1,10 +1,12 @@
-import { requireOperador, getEmpresaPorId } from "@/lib/operador";
-import { createClient } from "@/lib/supabase/server";
+import {
+  requireOperador,
+  getEmpresaPorId,
+  getFuentes,
+} from "@/lib/operador";
 import { formatFecha } from "@/lib/format";
 import { Card } from "@/components/ui";
 import { DatosForm } from "@/components/DatosForm";
 import { conectarFuente } from "./actions";
-import type { Fuente } from "@/lib/types";
 
 export default async function ClienteDatos({
   params,
@@ -15,14 +17,7 @@ export default async function ClienteDatos({
   const { id } = await params;
   const empresa = await getEmpresaPorId(id);
 
-  const supabase = await createClient();
-  const { data: fuentes } = await supabase
-    .from("fuentes")
-    .select("*")
-    .eq("empresa_id", empresa.id)
-    .order("last_synced_at", { ascending: false });
-
-  const lista = (fuentes ?? []) as Fuente[];
+  const lista = await getFuentes(empresa.id);
 
   return (
     <div className="max-w-3xl space-y-8">
