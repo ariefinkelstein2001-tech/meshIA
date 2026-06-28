@@ -23,12 +23,24 @@ type Accion = (
 
 type Tab = "archivo" | "sheet";
 
+const ACCION_NULA: Accion = async () => ({
+  ok: false,
+  insertadas: 0,
+  errores: [],
+  totalFilas: 0,
+  mensaje: "",
+});
+
 export function ConectarDatos({
   empresa,
   action,
+  standalone = false,
 }: {
   empresa: Empresa;
-  action: Accion;
+  /** Acción de guardado. En modo standalone (solo probar) no se usa. */
+  action?: Accion;
+  /** Solo vista previa: oculta guardar y la pestaña de Google Sheet. */
+  standalone?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("archivo");
   const [dragging, setDragging] = useState(false);
@@ -41,7 +53,7 @@ export function ConectarDatos({
   const [guardado, formAction, guardando] = useActionState<
     ResultadoIngesta | null,
     FormData
-  >(action, null);
+  >(action ?? ACCION_NULA, null);
 
   const headers = filas && mapeo ? filas[mapeo.filaEncabezado] ?? [] : [];
   const etiquetas = useMemo(() => etiquetasColumnas(headers), [headers]);
@@ -121,16 +133,18 @@ export function ConectarDatos({
 
   return (
     <div className="space-y-5">
-      <div className="inline-flex rounded-pill border border-line bg-paper p-1">
-        <TabBtn activo={tab === "archivo"} onClick={() => setTab("archivo")}>
-          Subir archivo
-        </TabBtn>
-        <TabBtn activo={tab === "sheet"} onClick={() => setTab("sheet")}>
-          Google Sheet
-        </TabBtn>
-      </div>
+      {!standalone ? (
+        <div className="inline-flex rounded-pill border border-line bg-paper p-1">
+          <TabBtn activo={tab === "archivo"} onClick={() => setTab("archivo")}>
+            Subir archivo
+          </TabBtn>
+          <TabBtn activo={tab === "sheet"} onClick={() => setTab("sheet")}>
+            Google Sheet
+          </TabBtn>
+        </div>
+      ) : null}
 
-      {tab === "archivo" ? (
+      {standalone || tab === "archivo" ? (
         <>
           <div
             onDragOver={(e) => {
@@ -203,6 +217,7 @@ export function ConectarDatos({
               formAction={formAction}
               guardando={guardando}
               guardado={guardado}
+              mostrarGuardar={!standalone}
             />
           ) : null}
         </>
@@ -439,6 +454,7 @@ function Resultado({
   formAction,
   guardando,
   guardado,
+  mostrarGuardar,
 }: {
   parse: ReturnType<typeof aplicarMapeo>;
   metricas: ReturnType<typeof calcularMetricas> | null;
@@ -447,6 +463,7 @@ function Resultado({
   formAction: (fd: FormData) => void;
   guardando: boolean;
   guardado: ResultadoIngesta | null;
+  mostrarGuardar: boolean;
 }) {
   const validos = parse.movimientos.length;
 
@@ -482,19 +499,21 @@ function Resultado({
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <h3 className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-              Vista previa del panel
+              Tu panel
             </h3>
-            <form action={formAction}>
-              <input type="hidden" name="tipo" value="csv" />
-              <input type="hidden" name="empresaId" value={empresa.id} />
-              <input type="hidden" name="contenido" value={contenidoCsv} />
-              <Button type="submit" disabled={guardando}>
-                {guardando ? "Guardando…" : `Guardar para ${empresa.nombre}`}
-              </Button>
-            </form>
+            {mostrarGuardar ? (
+              <form action={formAction}>
+                <input type="hidden" name="tipo" value="csv" />
+                <input type="hidden" name="empresaId" value={empresa.id} />
+                <input type="hidden" name="contenido" value={contenidoCsv} />
+                <Button type="submit" disabled={guardando}>
+                  {guardando ? "Guardando…" : `Guardar para ${empresa.nombre}`}
+                </Button>
+              </form>
+            ) : null}
           </div>
 
-          {guardado ? (
+          {mostrarGuardar && guardado ? (
             <p
               className={`mb-3 text-sm ${guardado.ok ? "text-brand-deep" : "text-danger-deep"}`}
               role="status"
