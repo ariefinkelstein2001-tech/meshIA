@@ -1,38 +1,53 @@
-/** Marca meshIA: un nodo "mesh" que se ordena en un panel. */
+/** Marca meshIA: dos arcadas (gris + verde) que forman una "m" tipo malla. */
+
+const GRIS = "#8e9591";
+const VERDE = "#6fb23f";
+
+/** Lockup horizontal: símbolo + "meshIA". Se usa en headers y footers. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <Mark className="h-7 w-7" />
+      <Mark className="h-7 w-auto" />
       <span className="font-display text-xl font-bold tracking-tight text-ink">
-        mesh<span className="text-brand">IA</span>
+        mesh<span style={{ color: VERDE }}>IA</span>
       </span>
     </span>
   );
 }
 
+/** Solo el símbolo (dos arcadas). */
 export function Mark({ className = "" }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 32 32"
+      viewBox="0 0 64 58"
       className={className}
       role="img"
       aria-label="meshIA"
-      fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect width="32" height="32" rx="9" fill="var(--brand)" />
-      {/* nodos de la malla */}
-      <circle cx="10" cy="10" r="2.4" fill="var(--paper)" />
-      <circle cx="22" cy="10" r="2.4" fill="var(--paper)" />
-      <circle cx="10" cy="22" r="2.4" fill="var(--accent)" />
-      <circle cx="22" cy="22" r="2.4" fill="var(--paper)" />
-      {/* conexiones */}
-      <path
-        d="M10 10h12M10 10v12M22 10v12M10 22h12"
-        stroke="var(--paper)"
-        strokeWidth="1.4"
-        strokeOpacity="0.6"
-      />
+      <g
+        fill="none"
+        strokeWidth={13}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* arcada izquierda (gris) */}
+        <path d="M9 50 L9 21 A12 12 0 0 1 33 21 L33 50" stroke={GRIS} />
+        {/* arcada derecha (verde), encima */}
+        <path d="M31 50 L31 21 A12 12 0 0 1 55 21 L55 50" stroke={VERDE} />
+      </g>
     </svg>
+  );
+}
+
+/** Versión apilada (símbolo arriba, wordmark abajo). Para portadas/og-image. */
+export function LogoStacked({ className = "" }: { className?: string }) {
+  return (
+    <span className={`inline-flex flex-col items-center gap-2 ${className}`}>
+      <Mark className="h-12 w-auto" />
+      <span className="font-display text-2xl font-bold tracking-tight text-ink">
+        mesh<span style={{ color: VERDE }}>IA</span>
+      </span>
+    </span>
   );
 }
