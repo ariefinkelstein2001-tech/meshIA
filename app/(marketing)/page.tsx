@@ -22,13 +22,13 @@ export default function Landing() {
               creciendo. En pesos, en chileno, desde el celular.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <ButtonLink href="#waitlist">Quiero un cupo</ButtonLink>
-              <ButtonLink href="/planes" variant="secondary">
-                Ver planes
+              <ButtonLink href="/probar">Probar con tu Excel</ButtonLink>
+              <ButtonLink href="#waitlist" variant="secondary">
+                Quiero un cupo
               </ButtonLink>
             </div>
             <p className="eyebrow mt-6">
-              No instalas nada · nosotros lo dejamos andando
+              Sin cuenta · suelta tu planilla y mira tu Pulso al toque
             </p>
           </div>
           <HeroPulso />
