@@ -64,3 +64,52 @@
   font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
+
+/* Eyebrow mono: el rótulo de datos es el recurso estructural de la marca. */
+.eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* --- Firma de la landing: las fuentes sueltas se ordenan en un Pulso --- */
+@keyframes meshSettle {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) rotate(var(--rot, -3deg));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+}
+@keyframes panelRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes barGrow {
+  from {
+    transform: scaleY(0.04);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.anim-settle {
+  animation: meshSettle 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-rise {
+  animation: panelRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-bar {
+  transform-origin: bottom;
+  animation: barGrow 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
