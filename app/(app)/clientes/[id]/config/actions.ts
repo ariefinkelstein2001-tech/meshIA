@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireOperador } from "@/lib/operador";
+import { DEMO_MODE, DEMO_AVISO } from "@/lib/demo";
 import type { Plan } from "@/lib/types";
 
 const PLANES_VALIDOS: Plan[] = ["sitio", "pulso", "pro"];
@@ -10,6 +11,7 @@ const PLANES_VALIDOS: Plan[] = ["sitio", "pulso", "pro"];
 /** Actualiza nombre y plan de una empresa (cliente). Solo operadores (RLS). */
 export async function actualizarEmpresa(formData: FormData) {
   await requireOperador();
+  if (DEMO_MODE) return { error: DEMO_AVISO };
 
   const empresaId = String(formData.get("empresaId") ?? "");
   const nombre = String(formData.get("nombre") ?? "").trim();
@@ -38,6 +40,7 @@ export async function actualizarEmpresa(formData: FormData) {
 /** Activa/desactiva el link público de solo lectura del panel. */
 export async function togglePanelPublico(empresaId: string, habilitar: boolean) {
   await requireOperador();
+  if (DEMO_MODE) return { ok: true as const, panel_publico: habilitar };
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -54,9 +57,10 @@ export async function togglePanelPublico(empresaId: string, habilitar: boolean) 
 /** Regenera el token público (invalida el link anterior). */
 export async function regenerarToken(empresaId: string) {
   await requireOperador();
+  const nuevo = crypto.randomUUID();
+  if (DEMO_MODE) return { ok: true as const, public_token: nuevo };
   const supabase = await createClient();
 
-  const nuevo = crypto.randomUUID();
   const { error } = await supabase
     .from("empresas")
     .update({ public_token: nuevo })

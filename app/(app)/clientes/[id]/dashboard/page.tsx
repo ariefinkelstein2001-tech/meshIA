@@ -1,5 +1,8 @@
-import { requireOperador, getEmpresaPorId } from "@/lib/operador";
-import { createClient } from "@/lib/supabase/server";
+import {
+  requireOperador,
+  getEmpresaPorId,
+  getTransacciones,
+} from "@/lib/operador";
 import { calcularMetricas } from "@/lib/metrics";
 import { puedeUsarPulso } from "@/lib/planes";
 import type { Transaccion } from "@/lib/types";
@@ -37,14 +40,10 @@ export default async function ClienteDashboard({
     );
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("transacciones")
-    .select("*")
-    .eq("empresa_id", empresa.id)
-    .order("fecha", { ascending: true });
-
-  if (error) {
+  let transacciones: Transaccion[];
+  try {
+    transacciones = await getTransacciones(empresa.id);
+  } catch {
     return (
       <Card className="mx-auto max-w-md text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card bg-danger/10 text-danger-deep">
@@ -60,7 +59,7 @@ export default async function ClienteDashboard({
     );
   }
 
-  const m = calcularMetricas((data ?? []) as Transaccion[]);
+  const m = calcularMetricas(transacciones);
 
   if (!m.hayDatos) {
     return <EstadoVacioPanel datosHref={`/clientes/${id}/datos`} />;

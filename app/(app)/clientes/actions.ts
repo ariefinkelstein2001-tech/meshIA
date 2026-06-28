@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireOperador } from "@/lib/operador";
+import { DEMO_MODE, DEMO_AVISO } from "@/lib/demo";
 import type { Plan } from "@/lib/types";
 
 const PLANES_VALIDOS: Plan[] = ["sitio", "pulso", "pro"];
@@ -24,6 +25,7 @@ export async function crearCliente(
   formData: FormData,
 ) {
   const operador = await requireOperador();
+  if (DEMO_MODE) return { error: DEMO_AVISO };
 
   const nombre = String(formData.get("nombre") ?? "").trim();
   const plan = (String(formData.get("plan") ?? "pulso") as Plan) || "pulso";
