@@ -1,8 +1,15 @@
 "use client";
 
 import { useActionState, useMemo, useRef, useState } from "react";
-import { archivoACsv, esArchivoSoportado } from "@/lib/leer-archivo";
-import { parsearPlanilla, type ResultadoParseo } from "@/lib/parsers";
+import { archivoAFilas, esArchivoSoportado } from "@/lib/leer-archivo";
+import {
+  sugerirMapeo,
+  aplicarMapeo,
+  detectarFilaEncabezado,
+  etiquetasColumnas,
+  movimientosACsv,
+  type Mapeo,
+} from "@/lib/mapeo";
 import { calcularMetricas } from "@/lib/metrics";
 import { Button, Card, Field, inputClass } from "@/components/ui";
 import { DashboardView } from "@/components/DashboardView";
@@ -28,16 +35,22 @@ export function ConectarDatos({
   const [leyendo, setLeyendo] = useState(false);
   const [nombre, setNombre] = useState("");
   const [errorLectura, setErrorLectura] = useState("");
-  const [parse, setParse] = useState<ResultadoParseo | null>(null);
-  const [contenidoCsv, setContenidoCsv] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [filas, setFilas] = useState<string[][] | null>(null);
+  const [mapeo, setMapeo] = useState<Mapeo | null>(null);
 
   const [guardado, formAction, guardando] = useActionState<
     ResultadoIngesta | null,
     FormData
   >(action, null);
 
-  // Métricas para la vista previa instantánea (cliente, sin tocar la base).
+  const headers = filas && mapeo ? filas[mapeo.filaEncabezado] ?? [] : [];
+  const etiquetas = useMemo(() => etiquetasColumnas(headers), [headers]);
+
+  const parse = useMemo(() => {
+    if (!filas || !mapeo) return null;
+    return aplicarMapeo(filas, mapeo);
+  }, [filas, mapeo]);
+
   const metricas = useMemo(() => {
     if (!parse) return null;
     const txs: Transaccion[] = parse.movimientos.map((mv, i) => ({
@@ -54,9 +67,15 @@ export function ConectarDatos({
     return calcularMetricas(txs);
   }, [parse, empresa.id]);
 
+  const contenidoCsv = useMemo(
+    () => (parse ? movimientosACsv(parse.movimientos) : ""),
+    [parse],
+  );
+
   async function procesar(file: File) {
     setErrorLectura("");
-    setParse(null);
+    setFilas(null);
+    setMapeo(null);
     setNombre(file.name);
 
     if (!esArchivoSoportado(file)) {
@@ -66,10 +85,14 @@ export function ConectarDatos({
 
     setLeyendo(true);
     try {
-      const csv = await archivoACsv(file);
-      const resultado = parsearPlanilla(csv);
-      setContenidoCsv(csv);
-      setParse(resultado);
+      const f = await archivoAFilas(file);
+      if (f.length < 2) {
+        setErrorLectura("La planilla no tiene datos suficientes.");
+        return;
+      }
+      const idx = detectarFilaEncabezado(f);
+      setFilas(f);
+      setMapeo(sugerirMapeo(f[idx] ?? [], idx));
     } catch (e) {
       setErrorLectura(
         e instanceof Error ? e.message : "No pudimos leer el archivo.",
@@ -77,6 +100,16 @@ export function ConectarDatos({
     } finally {
       setLeyendo(false);
     }
+  }
+
+  function set(patch: Partial<Mapeo>) {
+    setMapeo((m) => (m ? { ...m, ...patch } : m));
+  }
+
+  function cambiarFilaEncabezado(idx: number) {
+    if (!filas) return;
+    // Al cambiar la fila de encabezados, re-sugerimos el mapeo con esos títulos.
+    setMapeo(sugerirMapeo(filas[idx] ?? [], idx));
   }
 
   function onDrop(e: React.DragEvent) {
@@ -106,11 +139,12 @@ export function ConectarDatos({
             }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
-            onClick={() => inputRef.current?.click()}
+            onClick={() => document.getElementById("file-input")?.click()}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+              if (e.key === "Enter" || e.key === " ")
+                document.getElementById("file-input")?.click();
             }}
             className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed p-10 text-center transition-colors ${
               dragging
@@ -122,18 +156,16 @@ export function ConectarDatos({
               ⬆
             </div>
             <p className="text-sm font-semibold text-ink">
-              {leyendo
-                ? "Leyendo archivo…"
-                : "Arrastra tu Excel o CSV aquí"}
+              {leyendo ? "Leyendo archivo…" : "Arrastra tu Excel o CSV aquí"}
             </p>
             <p className="text-xs text-muted">
-              o haz clic para elegirlo · .xlsx o .csv
+              Lo leemos tal como lo tiene tu empresa · .xlsx o .csv
             </p>
             {nombre && !leyendo ? (
               <p className="tabular mt-1 text-xs text-brand-deep">{nombre}</p>
             ) : null}
             <input
-              ref={inputRef}
+              id="file-input"
               type="file"
               accept=".csv,.xlsx,text/csv"
               onChange={(e) => {
@@ -150,6 +182,16 @@ export function ConectarDatos({
                 {errorLectura}
               </p>
             </Card>
+          ) : null}
+
+          {filas && mapeo ? (
+            <Mapeador
+              filas={filas}
+              mapeo={mapeo}
+              etiquetas={etiquetas}
+              set={set}
+              cambiarFilaEncabezado={cambiarFilaEncabezado}
+            />
           ) : null}
 
           {parse ? (
@@ -199,6 +241,196 @@ export function ConectarDatos({
   );
 }
 
+function Mapeador({
+  filas,
+  mapeo,
+  etiquetas,
+  set,
+  cambiarFilaEncabezado,
+}: {
+  filas: string[][];
+  mapeo: Mapeo;
+  etiquetas: string[];
+  set: (patch: Partial<Mapeo>) => void;
+  cambiarFilaEncabezado: (idx: number) => void;
+}) {
+  return (
+    <Card className="space-y-4">
+      <div>
+        <h3 className="font-display text-base font-bold text-ink">
+          ¿Cómo leemos tu planilla?
+        </h3>
+        <p className="mt-1 text-xs text-muted">
+          Adivinamos las columnas. Revisa y ajusta si algo no calza — el panel se
+          actualiza al instante.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Fila de los títulos">
+          <select
+            className={inputClass}
+            value={mapeo.filaEncabezado}
+            onChange={(e) => cambiarFilaEncabezado(Number(e.target.value))}
+          >
+            {filas.slice(0, 8).map((_, i) => (
+              <option key={i} value={i}>
+                Fila {i + 1}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <ColSelect
+          label="Fecha"
+          etiquetas={etiquetas}
+          value={mapeo.fecha}
+          onChange={(v) => set({ fecha: v ?? 0 })}
+        />
+      </div>
+
+      <Field label="¿Cómo se distinguen ingresos de gastos?">
+        <select
+          className={inputClass}
+          value={mapeo.tipoEstrategia}
+          onChange={(e) => {
+            const tipoEstrategia = e.target.value as Mapeo["tipoEstrategia"];
+            // rellena defaults razonables al cambiar de estrategia
+            set({
+              tipoEstrategia,
+              montoCol: mapeo.montoCol ?? 0,
+              tipoCol: mapeo.tipoCol ?? 0,
+              ingresosCol: mapeo.ingresosCol ?? 0,
+              gastosCol: mapeo.gastosCol ?? 0,
+            });
+          }}
+        >
+          <option value="columna">Una columna dice el tipo (ingreso/gasto)</option>
+          <option value="signo">Un monto: negativo = gasto, positivo = ingreso</option>
+          <option value="dos-columnas">Columnas separadas de ingresos y gastos</option>
+          <option value="fijo">Todo el archivo es de un solo tipo</option>
+        </select>
+      </Field>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {mapeo.tipoEstrategia === "columna" ? (
+          <>
+            <ColSelect
+              label="Columna del tipo"
+              etiquetas={etiquetas}
+              value={mapeo.tipoCol}
+              onChange={(v) => set({ tipoCol: v })}
+            />
+            <ColSelect
+              label="Columna del monto"
+              etiquetas={etiquetas}
+              value={mapeo.montoCol}
+              onChange={(v) => set({ montoCol: v })}
+            />
+          </>
+        ) : null}
+
+        {mapeo.tipoEstrategia === "signo" ? (
+          <ColSelect
+            label="Columna del monto (con signo)"
+            etiquetas={etiquetas}
+            value={mapeo.montoCol}
+            onChange={(v) => set({ montoCol: v })}
+          />
+        ) : null}
+
+        {mapeo.tipoEstrategia === "dos-columnas" ? (
+          <>
+            <ColSelect
+              label="Columna de ingresos"
+              etiquetas={etiquetas}
+              value={mapeo.ingresosCol}
+              onChange={(v) => set({ ingresosCol: v })}
+            />
+            <ColSelect
+              label="Columna de gastos"
+              etiquetas={etiquetas}
+              value={mapeo.gastosCol}
+              onChange={(v) => set({ gastosCol: v })}
+            />
+          </>
+        ) : null}
+
+        {mapeo.tipoEstrategia === "fijo" ? (
+          <>
+            <ColSelect
+              label="Columna del monto"
+              etiquetas={etiquetas}
+              value={mapeo.montoCol}
+              onChange={(v) => set({ montoCol: v })}
+            />
+            <Field label="Todo es…">
+              <select
+                className={inputClass}
+                value={mapeo.tipoFijo}
+                onChange={(e) =>
+                  set({ tipoFijo: e.target.value as "ingreso" | "gasto" })
+                }
+              >
+                <option value="ingreso">Ingreso</option>
+                <option value="gasto">Gasto</option>
+              </select>
+            </Field>
+          </>
+        ) : null}
+
+        <ColSelect
+          label="Categoría (opcional)"
+          etiquetas={etiquetas}
+          value={mapeo.categoria}
+          onChange={(v) => set({ categoria: v })}
+          opcional
+        />
+        <ColSelect
+          label="Descripción (opcional)"
+          etiquetas={etiquetas}
+          value={mapeo.descripcion}
+          onChange={(v) => set({ descripcion: v })}
+          opcional
+        />
+      </div>
+    </Card>
+  );
+}
+
+function ColSelect({
+  label,
+  etiquetas,
+  value,
+  onChange,
+  opcional = false,
+}: {
+  label: string;
+  etiquetas: string[];
+  value: number | null;
+  onChange: (v: number | null) => void;
+  opcional?: boolean;
+}) {
+  return (
+    <Field label={label}>
+      <select
+        className={inputClass}
+        value={value ?? ""}
+        onChange={(e) =>
+          onChange(e.target.value === "" ? null : Number(e.target.value))
+        }
+      >
+        {opcional ? <option value="">— ninguna —</option> : null}
+        {etiquetas.map((et, i) => (
+          <option key={i} value={i}>
+            {et}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+}
+
 function Resultado({
   parse,
   metricas,
@@ -208,7 +440,7 @@ function Resultado({
   guardando,
   guardado,
 }: {
-  parse: ResultadoParseo;
+  parse: ReturnType<typeof aplicarMapeo>;
   metricas: ReturnType<typeof calcularMetricas> | null;
   empresa: Empresa;
   contenidoCsv: string;
@@ -220,16 +452,24 @@ function Resultado({
 
   return (
     <div className="space-y-4">
-      <Card className={validos > 0 ? "border-brand/30 bg-brand/5" : "border-danger/30 bg-danger/5"}>
-        <p className={`text-sm font-medium ${validos > 0 ? "text-brand-deep" : "text-danger-deep"}`}>
+      <Card
+        className={
+          validos > 0 ? "border-brand/30 bg-brand/5" : "border-danger/30 bg-danger/5"
+        }
+      >
+        <p
+          className={`text-sm font-medium ${validos > 0 ? "text-brand-deep" : "text-danger-deep"}`}
+        >
           {validos > 0
             ? `${validos} movimiento(s) leídos correctamente`
-            : "No encontramos movimientos válidos"}
-          {parse.errores.length > 0 ? ` · ${parse.errores.length} con problemas` : ""}
+            : "No encontramos movimientos válidos con este mapeo"}
+          {parse.errores.length > 0
+            ? ` · ${parse.errores.length} con problemas`
+            : ""}
         </p>
         {parse.errores.length > 0 ? (
           <ul className="mt-2 max-h-40 space-y-1 overflow-auto text-xs text-danger-deep">
-            {parse.errores.slice(0, 50).map((e, i) => (
+            {parse.errores.slice(0, 30).map((e, i) => (
               <li key={i}>
                 Fila {e.fila}: {e.mensaje}
               </li>

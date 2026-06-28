@@ -138,10 +138,14 @@ vuelve a exigir login + datos reales.
 ## Notas
 
 - El parser CSV es propio (sin librerías). Para leer **Excel (.xlsx)** se usa
-  `read-excel-file` (ligera, parsea en el browser); justificada porque las pymes
-  entregan planillas en Excel. En `/clientes/[id]/datos` puedes **arrastrar** un
-  Excel o CSV y se muestra el **panel al instante** (parseo + métricas en el
-  cliente), antes de guardarlo.
+  `exceljs` (robusto con planillas reales: celdas vacías, fechas, inline/shared
+  strings; se carga con import dinámico solo en la consola). Justificado porque
+  las pymes entregan Excel y cada una con su formato.
+- **Mapeador de columnas** (`lib/mapeo.ts`): al arrastrar un Excel/CSV en
+  `/clientes/[id]/datos`, detecta la fila de títulos y adivina qué columna es
+  fecha/monto/tipo/categoría (incluye estrategias: columna de tipo, signo del
+  monto, columnas separadas ingreso/gasto, o tipo fijo). El operador ajusta y el
+  **panel se arma en vivo** (parseo + métricas en el cliente) antes de guardar.
 - Deploy: conectar el repo a Vercel, setear las env vars y desplegar.
 - **Diseño**: toda la app (no solo la landing) usa los tokens del §5 y las fuentes
   Bricolage / Inter / Space Mono. Los montos van siempre en Space Mono (tabular).
