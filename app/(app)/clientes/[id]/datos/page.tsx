@@ -5,7 +5,7 @@ import {
 } from "@/lib/operador";
 import { formatFecha } from "@/lib/format";
 import { Card } from "@/components/ui";
-import { DatosForm } from "@/components/DatosForm";
+import { ConectarDatos } from "@/components/ConectarDatos";
 import { conectarFuente } from "./actions";
 
 export default async function ClienteDatos({
@@ -24,12 +24,12 @@ export default async function ClienteDatos({
       <div>
         <h2 className="font-display text-xl font-bold text-ink">Datos</h2>
         <p className="mt-1 text-sm text-muted">
-          Conecta las ventas y gastos del cliente. Cada sincronización reemplaza
-          los datos de esa fuente con la versión más nueva.
+          Arrastra el Excel o CSV del cliente y ve el panel al instante. Cada
+          sincronización reemplaza los datos de esa fuente con la versión más nueva.
         </p>
       </div>
 
-      <DatosForm empresaId={empresa.id} action={conectarFuente} />
+      <ConectarDatos empresa={empresa} action={conectarFuente} />
 
       <section>
         <h3 className="mb-3 font-display text-base font-bold text-ink">
